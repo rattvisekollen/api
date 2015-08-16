@@ -6,14 +6,14 @@ class ProductsController < ApplicationController
     render json: @product
   end
 
-  def create
-    @product = Product.create!(product_params)
+  def update
+    if @product
+      @product.update!(product_params)
+    else
+      @product = Product.create!(product_params)
+    end
 
     render json: { success: true }
-  end
-
-  def update
-    @product.update!(product_params)
   end
 
   private
