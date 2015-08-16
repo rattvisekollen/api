@@ -1,10 +1,30 @@
 # coding: utf-8
 class ProductsController < ApplicationController
+  before_filter :product
+
   def show
-    render json: sample_product
+    render json: @product
+  end
+
+  def create
+    @product = Product.create!(product_params)
+
+    render json: { success: true }
+  end
+
+  def update
+    @product.update!(product_params)
   end
 
   private
+
+  def product
+    @product = Product.find_by_barcode(params[:barcode])
+  end
+
+  def product_params
+    params.require(:product).permit!
+  end
 
   def sample_product
     {

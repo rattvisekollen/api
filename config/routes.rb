@@ -1,3 +1,3 @@
 Rails.application.routes.draw do
-  resources :products, defaults: { format: :json }
+  resources :products, param: :barcode, defaults: { format: :json }
 end
