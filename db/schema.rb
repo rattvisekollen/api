@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150822131425) do
+ActiveRecord::Schema.define(version: 20150822132726) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -29,8 +29,22 @@ ActiveRecord::Schema.define(version: 20150822131425) do
     t.string   "origin_raw"
     t.text     "ingredients"
     t.text     "ingredients_raw"
-    t.datetime "created_at",      null: false
-    t.datetime "updated_at",      null: false
+    t.datetime "created_at",                          null: false
+    t.datetime "updated_at",                          null: false
+    t.boolean  "krav",                default: false, null: false
+    t.boolean  "eu_organic",          default: false, null: false
+    t.boolean  "eu_ecolabel",         default: false, null: false
+    t.boolean  "fairtrade",           default: false, null: false
+    t.boolean  "rainforest_alliance", default: false, null: false
+    t.boolean  "nyckelhalet",         default: false, null: false
+    t.boolean  "co_compensated",      default: false, null: false
+    t.boolean  "anglamark",           default: false, null: false
+    t.boolean  "garant",              default: false, null: false
+    t.boolean  "msc",                 default: false, null: false
+    t.boolean  "natrue",              default: false, null: false
+    t.boolean  "naturbete",           default: false, null: false
+    t.boolean  "svensk_fagel",        default: false, null: false
+    t.boolean  "sadesaxet",           default: false, null: false
   end
 
   add_index "products", ["barcode"], name: "index_products_on_barcode", unique: true, using: :btree
