@@ -1,6 +1,11 @@
 # coding: utf-8
 class ProductsController < ApplicationController
-  before_filter :product
+  before_filter :product, only: [:show, :update]
+  before_filter :products, only: [:index]
+
+  def index
+    render json: @products
+  end
 
   def show
     render json: @product
@@ -24,6 +29,12 @@ class ProductsController < ApplicationController
 
   def product
     @product = Product.find_by_barcode(params[:barcode])
+  end
+
+  def products
+    @products = Product.where(nil)
+    @products = @products.offset(params[:offset]) if params[:offset]
+    @products = @products.limit(params[:limit]) if params[:limit]
   end
 
   def product_params
