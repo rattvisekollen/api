@@ -16,6 +16,10 @@ class ProductsController < ApplicationController
     render json: { success: true }
   end
 
+  def count
+    render json: { count: Product.count }
+  end
+
   private
 
   def product
