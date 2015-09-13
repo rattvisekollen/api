@@ -18,6 +18,7 @@ bundle exec rails server
 # the api should now be running on http://localhost:3000
 ```
 
+
 ## Scraping
 The scrapers can be run locally using rake tasks. To scrape products from ex. Matvaran, run
 ```bash
