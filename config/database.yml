@@ -1,23 +1,16 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  database: rattvisekollen
+  port: 5432
+  encoding: utf8
+  pool: 5
+
 development:
-  adapter: postgresql
-  encoding: unicode
-  database: rattvisekollen_development
-  pool: 5
-
-test:
-  adapter: postgresql
-  encoding: unicode
-  database: rattvisekollen_test
-  pool: 5
-
-staging:
-  adapter: postgresql
-  encoding: unicode
-  database: rattvisekollen_staging
-  pool: 5
+  <<: *default
 
 production:
-  adapter: postgresql
-  encoding: unicode
-  database: rattvisekollen_production
-  pool: 5
+  <<: *default
+  username: <%= ENV["RDS_USERNAME"] %>
+  password: <%= ENV["RDS_PASSWORD"] %>
+  host: <%= ENV["RDS_HOST"] %>
