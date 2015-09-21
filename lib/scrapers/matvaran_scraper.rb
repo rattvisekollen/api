@@ -1,5 +1,5 @@
 # coding: utf-8
-class MatvaranScraper
+class MatvaranScraper < BaseScraper
   def scrape(url)
     parsed_product = parse(url)
 
@@ -48,153 +48,134 @@ class MatvaranScraper
   def parse_ingredients(ingredients)
     return [] if ingredients.blank?
 
-    filtered_words_pattern = /(#{ (word_filter_before + word_filter_nordic).join('|') })/
-    percent_pattern = /[0-9,\.]+\s*%/
-    illegal_chars_pattern = /[:\r\n\t]/
-    separator_pattern = /[\(\);,.\*®\|]/
-
     ingredients = ingredients.mb_chars.downcase.to_s
-    ingredients = ingredients.gsub(filtered_words_pattern, "")
-    word_replacements.each do |a, b|
-      ingredients = ingredients.gsub(a, b)
-    end
-    ingredients = ingredients.gsub("och ", ",")
-    ingredients = ingredients.gsub(/\s+/, " ")
-    ingredients = ingredients.gsub(percent_pattern, ",")
-    ingredients = ingredients.gsub(illegal_chars_pattern, "")
+
+    ingredients.gsub!(/\s+/, " ")
+
+    e_numbers.each { |number, word| ingredients.gsub!(number, word) }
+
+    illegal_foreign_patterns.each { |pattern| ingredients.gsub!(/\/( )?#{pattern}/, "") }
+
+    pattern_replacements_before.each { |a, b| ingredients.gsub!(a, b) }
+
+    illegal_patterns_pre.each { |pattern| ingredients.gsub!(pattern, "") }
+
+    ingredients.gsub!("och ", ",")
+    ingredients.gsub!(number_pattern, ",")
+    ingredients.gsub!(illegal_chars_pattern, "")
+
     ingredients = ingredients.split(separator_pattern)
     ingredients = ingredients.reject(&:blank?)
     ingredients = ingredients.map(&:strip)
-    word_filter_prefixes.each do |pre|
+
+    illegal_prefixes.each do |pre|
       ingredients = ingredients.map { |s| s.start_with?(pre) ? s.gsub(pre, "") : s }
     end
-    word_filter_suffixes.each do |suf|
+
+    illegal_suffixes.each do |suf|
       ingredients = ingredients.map { |s| s.end_with?(suf) ? s.gsub(suf, "") : s }
     end
+
+    pattern_replacements_after.each do |a, b|
+      ingredients = ingredients.map { |s| s == a ? b : s }
+    end
+
     ingredients = ingredients.map(&:strip)
-    ingredients = ingredients - word_filter_after
+    ingredients = ingredients - illegal_ingredients
     ingredients = ingredients.uniq
     ingredients = ingredients.reject(&:blank?)
   end
 
-  def word_filter_before
+  def number_pattern
+    /[0-9,\.]+(\s*%)?(\s*g)?/
+  end
+
+  def illegal_chars_pattern
+    /[:\r\n\t]/
+  end
+
+  def separator_pattern
+    /[\(\);,.\*®\|]/
+  end
+
+  def illegal_patterns_pre
     [
-      "ingredienser",
-      "lågpastöriserad",
-      "högpastöriserad",
-      "stabiliseringsmedel",
-      "berikad med",
-      "tag ur pizzan ur förpackningen och värm i ugn på 225°c i ca 9-10 min eller tills osten smält",
-      "bl.a.",
-      "bl a",
-      "innehåller också",
-      "1l",
-      "1 l",
+      /surhetsreglerande( )?medel/,
+      /stabiliseringsmedel/,
+      /konserveringsmedel/,
+      /emulgeringsmedel/,
+      /förtjockningsmedel/,
+      /surhetsreglerandemedel/,
+      /antioxidationsmedel/,
+      /sötningsmedel/,
+      /fuktighetsbevarande medel/,
+      /ingrediens(er)?/,
+      /lågpastöriserad/,
+      /högpastöriserad/,
+      /berikad med/,
+      /innehåller( också)?/,
+      /produkt(en)?(er)?/,
+      /1( )?l/,
+      /utvald sockersaltad/,
+      /fångstområde.+$/,
+      /kan innehålla spår av/,
+      /fetthalt/,
+      /uht-behandlad/,
+      /eu-jordbruk/,
+      /ej homogeniserad/,
+      /garnering/,
+      /krav-( )*ekologisk ingrediens( ej standardiserad)?/,
+      /kryddextrakt(er)?/,
+      /kalcium bidrar till att matsmältningsenzymerna fungerar normalt/,
+      /tag ur pizzan ur förpackningen och värm i ugn på 225°c i ca 9-10 min eller tills osten smält/,
+      /färgämne(n)?/,
+      /naturlig(a)?/,
+      /inkl/,
+      /svensk(a)?(t)?/,
+      /sverige/,
+      /ursprung(sland)?/,
+      /mjölken är/,
+      /tillsatt/,
+      /lämplig för veganer/,
+      /ekologisk/,
+      /(från|av) mjölk/,
+      /smakförstärkare/,
+      /delvis härdade vegetabiliska fetter/,
+      /vegetabiliska oljor/,
+      /ätfärdig/,
+      /sv\/no\/dk/,
+      /fiskad i nordostatlanten fångstzon 27/,
     ]
   end
 
-  def word_filter_nordic
+  def illegal_ingredients
     [
-      "/mælkeprotein",
-      "/mælk",
-      "/højpasteuriseret",
-      "/jordbær",
-      "/hyldebær-",
-      "/piskefløde",
-      "/sukker",
-      "/mysepulver",
-      "/rosin",
-      "/sødestoffer",
-      "/søtningsstoffer",
-      "/hærdet",
-      "/herdet",
-      "/voks",
-      "/emulgator",
-      "/farvestof",
-      "/sojabønnelecitin",
-      "/fortykningsmiddel",
-      "/overfadebehandlingmiddel",
-      "/hvetemel",
-      "/hvedemel",
-      "/vegetabilske",
-      "/oljer",
-      "/olier",
-      "/palme",
-      "/kokos",
-      "/sirup",
-      "/bakepulver",
-      "/bagepulver",
-      "/ingefær",
-      "/kryddernelliker",
-      "/kan inneholde spor av mandler",
-      "/kan indeholde spor af mandler",
-    ]
-  end
-
-  def word_filter_after
-    [
-      "uht-behandlad",
-      "eu-jordbruk",
-      "fetthalt",
-      "ej homogeniserad",
-      "garnering",
-      "konserveringsmedel",
-      "färgämne",
-      "färgämnen",
-      "emulgeringsmedel",
-      "förtjockningsmedel",
-      "surhetsreglerande medel",
-      "surhetsreglerandemedel",
-      "krav- ekologisk ingrediens ej standardiserad",
-      "krav-ekologisk ingrediens",
+      "frukt",
+      "helmuskel",
       "se",
       "dk",
-      "kryddextrakter",
-      "kryddextrakt",
-      "antioxidationsmedel",
       "kryddor",
       "bärberedning",
       "färg",
       "aromer",
-      "kalcium bidrar till att matsmältningsenzymerna fungerar normalt",
-      "naturlig arom",
-      "naturliga aromer",
-      "inkl",
-      "sötningsmedel",
-      "tillsatt",
-      "smakberedning",
-      "svensk mjölkråvara",
-      "produkten innehåller",
       "andra",
-      "ursprung sverige",
-      "svenskt",
-      "mjölken är",
+      "smakberedning",
       "krav-",
       "vitaminer",
-      "lämplig för veganer",
-      "ekologisk ingrediens",
+      "arom",
+      "aromer",
       "syra",
       "vatten",
-      "arom",
-      "från mjölk",
-      "av mjölk",
       "tre ankare",
-      "smakförstärkare",
-      "förtjocknings-/fortykningsmiddel",
-      "ytbehandlings-/overfladebehandlingsmidler",
-      "fuktighetsbevarande medel",
-      "delvis härdade vegetabiliska fetter",
-      "vegetabiliska oljor",
-      "30 gram",
-      "ätfärdig",
-      "salt av arspartam - acesulfam",
-      "gummibas",
-      "sv/no/dk",
-      "fiskad i nordostatlanten fångstzon 27",
+      "gram",
+      "g",
+      "sojabas",
+      "polydextros",
+      "smältsalter",
     ]
   end
 
-  def word_filter_prefixes
+  def illegal_prefixes
     [
       "motsvarar",
       "minst",
@@ -214,23 +195,98 @@ class MatvaranScraper
       "innehåller",
       "kokt",
       "rökt",
+      "svenska",
+      "svensk",
+      "pastöriserad",
+      "bl.a.",
+      "bl a",
     ]
   end
 
-  def word_filter_suffixes
+  def illegal_suffixes
     [
       "med",
+      " av komjölk",
+      " av svensk rapsgris",
+      " av vegetabiliskt fett",
     ]
   end
 
-  def word_replacements
+  def pattern_replacements_before
     {
-      "gris- och nötkött" => "griskött, nötkött",
+      /torsk- och sejrom/ => "torskrom, sejrom",
+      /gris- och nötkött/ => "griskött, nötkött",
+      /förtjocknings-/ => "förtjockningsmedel",
+      /ytbehandlings-/ => "ytbehandlingsmedel",
+      /mono-( )?och diglycerider/ => "monoglycerider, diglycerider",
+    }
+  end
+
+  def pattern_replacements_after
+    {
       "portionssnus dosa" => "portionssnus",
       "shea" => "sheaolja",
       "palm" => "palmolja",
       "raps" => "rapsolja",
       "kokosnöt" => "kokosnötsolja",
     }
+  end
+
+  def illegal_foreign_patterns
+    [
+      "mælkeprotein",
+      "mælk",
+      "højpasteuriseret",
+      "jordbær",
+      "hyldebær-",
+      "piskefløde",
+      "sukker",
+      "mysepulver",
+      "rosin",
+      "sødestoffer",
+      "søtningsstoffer",
+      "hærdet",
+      "herdet",
+      "voks",
+      "emulgator",
+      "farvestof",
+      "sojabønnelecitin",
+      "fortykningsmiddel",
+      "overfadebehandlingmiddel",
+      "hvetemel",
+      "hvedemel",
+      "vegetabilske",
+      "oljer",
+      "olier",
+      "palme",
+      "kokos",
+      "sirup",
+      "bakepulver",
+      "bagepulver",
+      "ingefær",
+      "kryddernelliker",
+      "kan inneholde spor av mandler",
+      "kan indeholde spor af mandler",
+      "græskarkerner",
+      "fuldkornsrugmel",
+      "fullkornsrugmel",
+      "speltmel",
+      "melonkerner",
+      "vand",
+      "hvedeklid",
+      "hvetekli",
+      "bygmalt",
+      "surdej",
+      "rug",
+      "rapsolie",
+      "honning",
+      "gjær",
+      "vegetabilsk fett",
+      "kan inneholde spor av melk",
+      "valmuefrø",
+      "overfladebehandlingsmidler",
+      "sesamfrø",
+      "hvetekim",
+    ]
   end
 end
