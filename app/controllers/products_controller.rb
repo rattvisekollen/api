@@ -25,6 +25,10 @@ class ProductsController < ApplicationController
     render json: { count: Product.count }
   end
 
+  def random
+    render json: Product.where(nil).offset(rand(Product.count)).first
+  end
+
   private
 
   def product
