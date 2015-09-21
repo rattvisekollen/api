@@ -6,6 +6,8 @@ class MatvaranScraper < BaseScraper
     product = Product.find_or_create_by(barcode: parsed_product[:barcode])
 
     product.update(parsed_product)
+  rescue => e
+    puts "Unable to scrape #{url}"
   end
 
   def parse(url)
