@@ -58,13 +58,15 @@ class MatvaranScraper < BaseScraper
 
     illegal_foreign_patterns.each { |pattern| ingredients.gsub!(/\/( )?#{pattern}/, "") }
 
+    ingredients.gsub!(illegal_chars_pattern, "")
+
+    ingredients.gsub!(number_pattern, ",")
+
     pattern_replacements_before.each { |a, b| ingredients.gsub!(a, b) }
 
     illegal_patterns_pre.each { |pattern| ingredients.gsub!(pattern, "") }
 
     ingredients.gsub!("och ", ",")
-    ingredients.gsub!(number_pattern, ",")
-    ingredients.gsub!(illegal_chars_pattern, "")
 
     ingredients = ingredients.split(separator_pattern)
     ingredients = ingredients.reject(&:blank?)
@@ -89,19 +91,29 @@ class MatvaranScraper < BaseScraper
   end
 
   def number_pattern
-    /[0-9,\.]+(\s*%)?(\s*g)?/
+    /[0-9,\.]+/
   end
 
   def illegal_chars_pattern
-    /[:\r\n\t]/
+    /[\(\):\r\n\t%=]/
   end
 
   def separator_pattern
-    /[\(\);,.\*®\|]/
+    /[;,.\*®\|]/
   end
 
   def illegal_patterns_pre
     [
+      /krav(-)*( )?ekologisk ingrediens.*$/,
+      /uppfö(tt|dd) .*$/,
+      /råvarorna innehåller.*$/,
+      /fiskad i .*$/,
+      /fångstområde.*$/,
+      /kan innehålla.*$/,
+      /innehåller inga tillsatta konserveringsmedel/,
+      /i scanmärkta produkter ingår endast svensk köttråvara/,
+      /kalcium bidrar till att matsmältningsenzymerna fungerar normalt/,
+      /tag ur pizzan ur förpackningen och värm i ugn på 225°c i ca 9-10 min eller tills osten smält/,
       /surhetsreglerande( )?medel/,
       /stabiliseringsmedel/,
       /konserveringsmedel/,
@@ -111,30 +123,31 @@ class MatvaranScraper < BaseScraper
       /antioxidationsmedel/,
       /sötningsmedel/,
       /fuktighetsbevarande medel/,
+      /klumpförebyggande medel/,
       /ingrediens(er)?/,
       /lågpastöriserad/,
       /högpastöriserad/,
       /berikad med/,
       /innehåller( också)?/,
       /produkt(en)?(er)?/,
+      /totalt/,
+      /uppfött (i)?/,
+      /slaktat (i)?/,
       /1( )?l/,
       /utvald sockersaltad/,
-      /fångstområde.+$/,
       /kan innehålla spår av/,
       /fetthalt/,
       /uht-behandlad/,
       /eu-jordbruk/,
       /ej homogeniserad/,
       /garnering/,
-      /krav-( )*ekologisk ingrediens( ej standardiserad)?/,
       /kryddextrakt(er)?/,
-      /kalcium bidrar till att matsmältningsenzymerna fungerar normalt/,
-      /tag ur pizzan ur förpackningen och värm i ugn på 225°c i ca 9-10 min eller tills osten smält/,
       /färgämne(n)?/,
       /naturlig(a)?/,
       /inkl/,
       /svensk(a)?(t)?/,
       /sverige/,
+      /danmark/,
       /ursprung(sland)?/,
       /mjölken är/,
       /tillsatt/,
@@ -146,7 +159,6 @@ class MatvaranScraper < BaseScraper
       /vegetabiliska oljor/,
       /ätfärdig/,
       /sv\/no\/dk/,
-      /fiskad i nordostatlanten fångstzon 27/,
     ]
   end
 
@@ -157,6 +169,7 @@ class MatvaranScraper < BaseScraper
       "se",
       "dk",
       "kryddor",
+      "andra kryddor",
       "bärberedning",
       "färg",
       "aromer",
@@ -168,12 +181,27 @@ class MatvaranScraper < BaseScraper
       "aromer",
       "syra",
       "vatten",
+      "kolsyrat vatten",
       "tre ankare",
       "gram",
       "g",
       "sojabas",
       "polydextros",
       "smältsalter",
+      "flingor",
+      "mineral",
+      "svinekjøtt",
+      "torkad",
+      "skalad",
+      "skalat",
+      "polerad",
+      "polerat",
+      "juice från koncentrat",
+      "tonnikala palana",
+      "vesi",
+      "suola",
+      "köttmängd",
+      "sötning från frukt",
     ]
   end
 
@@ -208,19 +236,25 @@ class MatvaranScraper < BaseScraper
   def illegal_suffixes
     [
       "med",
-      " av komjölk",
-      " av svensk rapsgris",
-      " av vegetabiliskt fett",
+      "av komjölk",
+      "av svensk rapsgris",
+      "av gris",
+      "av vegetabiliskt fett",
+      "skivad"
     ]
   end
 
   def pattern_replacements_before
     {
-      /torsk- och sejrom/ => "torskrom, sejrom",
-      /gris- och nötkött/ => "griskött, nötkött",
+      /torsk-\s*och sejrom/ => "torskrom, sejrom",
+      /gris-\s*och nötkött/ => "griskött, nötkött",
+      /nöt-\s*och griskött/ => "griskött, nötkött",
       /förtjocknings-/ => "förtjockningsmedel",
       /ytbehandlings-/ => "ytbehandlingsmedel",
-      /mono-( )?och diglycerider/ => "monoglycerider, diglycerider",
+      /mono-\s*och diglycerider/ => "monoglycerider, diglycerider",
+      /selleri-\s*(,|och) morotsextrakt/ => "selleriextrakt, morotsextrakt",
+      /solros-\/rapsolja/ => "solrosolja, rapsolja",
+      /apelsin-\s*och röd grapejuice/ => "apelsinjuice, röd grapejuice",
     }
   end
 
@@ -239,6 +273,7 @@ class MatvaranScraper < BaseScraper
       "mælkeprotein",
       "mælk",
       "højpasteuriseret",
+      "jordbærbiter",
       "jordbær",
       "hyldebær-",
       "piskefløde",
@@ -279,6 +314,7 @@ class MatvaranScraper < BaseScraper
       "hvetekli",
       "bygmalt",
       "surdej",
+      "rugmel",
       "rug",
       "rapsolie",
       "honning",
@@ -289,6 +325,17 @@ class MatvaranScraper < BaseScraper
       "overfladebehandlingsmidler",
       "sesamfrø",
       "hvetekim",
+      "flak",
+      "byggmalt",
+      "hveteskudd",
+      "overfatebehandlingsmiddel",
+      "svinekjøtt",
+      "fløte",
+      "gulrotsektrakt",
+      "maisstivelse",
+      "mel",
+      "egg",
+      "økologisk",
     ]
   end
 end
