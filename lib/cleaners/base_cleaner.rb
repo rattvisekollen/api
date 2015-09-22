@@ -1,5 +1,13 @@
 # coding: utf-8
-class BaseScraper
+class BaseCleaner
+  def base_product(raw_product)
+    if raw_product.barcode
+      Product.find_by(barcode: raw_product.barcode)
+    else
+      Product.find_by(name: raw_product.name, brand: raw_product.brand)
+    end || Product.new
+  end
+
   def e_numbers
     {
       "e100" => "kurkumin",

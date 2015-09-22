@@ -26,5 +26,6 @@ module RattvisekollenApi
     config.autoload_paths += Dir["#{config.root}/lib/"]
     config.autoload_paths += Dir["#{config.root}/lib/scrapers/"]
     config.autoload_paths += Dir["#{config.root}/lib/enqueuers/"]
+    config.autoload_paths += Dir["#{config.root}/lib/cleaners/"]
   end
 end
